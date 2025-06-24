@@ -60,3 +60,30 @@ This experiment investigates whether a wider or deeper Transformer architecture 
 
 **Final Decision:**
 The **`D_MODEL=32`, `LAYERS=2`, `HEADS=4`** configuration is confirmed as the optimal architecture. It provides the best balance of learning capacity and robust generalization for this specific forecasting task.
+
+---
+
+## Experiment 3: Optimizing Dropout Rate (Regularization)
+
+This experiment aimed to find the optimal dropout rate to prevent overfitting without hindering the model's ability to learn. The tests were conducted using the best architecture identified from the previous experiments.
+
+### Methodology (Dropout Rate)
+*   **Fixed Parameters:** `CONTEXT_LENGTH=30`, `D_MODEL=32`, `Layers=2`, `Heads=4`, `LR=1e-4`, `Batch Size=64`, `Epochs=20`, `Patience=10`.
+*   **Varied Parameter:** The `DROPOUT` rate was tested at values of 0.1, 0.2, and 0.3.
+
+### Results Summary (Dropout Rate)
+
+| DROPOUT Rate | Best `val_loss` (at Epoch) | Validation Set MAE | Test Set MAE | Test Set RMSE |
+| :----------- | :------------------------ | :--------------------: | :------------- | :------------ |
+| **0.1 (Baseline)** | **-3.0656 (Ep 19)**     | **0.000277**         | **0.000207**   | **0.000320**  |
+| 0.2          | -2.9442 (Ep 20)           | 0.000498             | 0.000401       | 0.000503      |
+| 0.3          | -2.9015 (Ep 20)           | 0.000429             | 0.000364       | 0.000466      |
+
+### Analysis and Conclusion (Dropout Rate)
+
+1.  **Optimal Regularization:** The results clearly show that the baseline **`DROPOUT=0.1` provides the best performance**. It strikes the right balance, allowing the model to learn effectively while still providing enough regularization to generalize well to the unseen test set.
+
+2.  **Underfitting with Higher Dropout:** Increasing the dropout rate to `0.2` and `0.3` led to a significant degradation in performance across all metrics (Training, Validation, and Test MAE/RMSE). This indicates that higher dropout rates over-constrain the "Small" model architecture, causing it to underfit. The model struggles to capture the underlying patterns in the data when too many neurons are randomly deactivated during training.
+
+**Final Decision:**
+The hyperparameter **`DROPOUT = 0.1` is confirmed as optimal** for this model configuration. No further tuning of this parameter is necessary.
