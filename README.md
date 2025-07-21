@@ -104,9 +104,10 @@ Upon successful execution of the notebook, a complete package for deployment is 
 
 These three files are all that is needed to use the model in an external application like a `backtrader` script.
 
-***
-**IMPORTANT NOTE ON DEPLOYMENT:** The `model_config.json` file is the definitive blueprint for the model's architecture. When loading the model in a separate script, the architecture instantiated must **exactly match** the one defined in this config file. Any mismatch (e.g., a different `D_MODEL`, `_LAYERS`, etc.) will cause a `RuntimeError` during `load_state_dict` with messages like "size mismatch" or "Missing key(s) in state_dict". Always ensure you are using the canonical `model_config.json` file that was generated alongside the `.pth` weights you intend to load.
-***
+### ***A Note on Versioning and Reproducibility***
+**IMPORTANT:** The saved artifacts, particularly the `target_scaler.pkl` file, are dependent on the library versions used during training (e.g., `scikit-learn==1.6.1`). Loading these artifacts in an environment with a different version (e.g., `1.7.1`) may produce an `InconsistentVersionWarning` and could lead to breaking code or invalid results.
+
+For maximum reliability in a production or backtesting environment, it is **highly recommended to re-run the `TimeSeries_Transformer_EURUSD_Forecasting.ipynb` notebook to retrain the model and generate fresh artifacts** using the exact library versions installed in your target environment. The final, optimized hyperparameters are already set in Cell 2 of the notebook for this purpose.
 
 ### Conceptual Guide for `backtrader` Integration
 Integrating this model into a `backtrader` strategy involves creating a custom `Indicator` or directly calling a prediction function within your `Strategy` class's `next()` method.
@@ -119,10 +120,7 @@ Integrating this model into a `backtrader` strategy involves creating a custom `
     *   Use the loaded `target_scaler` to `.transform()` the prices into their scaled representation.
 4.  **Predict:** Feed the scaled prices and time features into your loaded model to get a scaled prediction for the next bar.
 5.  **Post-process:** Use the loaded `target_scaler` to `.inverse_transform()` the model's output back into a real, understandable EURUSD price prediction.
-6.  **Generate Signal:** Use this final prediction to generate a trading signal. For example:
-    *   *Directional Signal:* If `predicted_price > current_close`, consider it a bullish signal.
-    *   *Magnitude Filter:* If `abs(predicted_price - current_close) > some_threshold`, it indicates a strong expected move.
-    *   *Confirmation:* Use the prediction to confirm an entry signal from another indicator.
+6.  **Generate Signal:** Use this final prediction to generate a trading signal.
 
 A separate repository dedicated to the backtesting and strategy implementation using these artifacts is the recommended next step.
 
