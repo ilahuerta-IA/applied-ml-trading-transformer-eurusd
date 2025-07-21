@@ -96,7 +96,7 @@ This project successfully demonstrates that for this large, high-frequency finan
 ---
 
 ## Exported Model Artifacts & Backtrader Integration
-Upon successful execution of the notebook, a complete package for deployment is saved in the `final_model_artifacts/` directory.
+Upon successful execution of the notebook, a complete package for deployment is saved in the `Models/` directory.
 
 *   `best_transformer_model.pth`: The trained model's state dictionary (the weights).
 *   `target_scaler.pkl`: The fitted `StandardScaler` object for data normalization.
