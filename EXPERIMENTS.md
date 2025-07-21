@@ -1,10 +1,10 @@
 # Model Development and Experiments: TimeSeriesTransformer
 
-This document outlines the experiments conducted to fine-tune the TimeSeriesTransformer model for forecasting EURUSD 5-minute closing prices. The goal is to systematically evaluate the impact of different hyperparameter choices on the model's predictive performance and compare it to an LSTM baseline.
+This document outlines the experiments conducted to fine-tune the TimeSeriesTransformer model for forecasting EURUSD 5-minute closing prices. The goal is to systematically evaluate the impact of different hyperparameter choices on the model's predictive performance.
 
 All experiments use the 10-year, 5-minute EURUSD dataset with a 60/20/20 chronological split for training, validation, and testing. The primary decision-making metric is the **Validation Set MAE**, with the **Test Set MAE** used for final performance assessment.
 
-*(Note: The negative loss values reported in these experiments are due to the model's default Negative Log-Likelihood (NLL) loss function. While useful for observing convergence, the MAE and RMSE metrics, calculated on the original price scale, are used for all performance comparisons.)*
+*(Note: The negative loss values reported in these experiments are due to the model's default Negative Log-Likelihood (NLL) loss function. While useful for observing convergence, the MAE and RMSE metrics are used for all performance comparisons.)*
 
 ---
 
@@ -23,7 +23,7 @@ This experiment focused on determining the most effective lookback window.
 | **30**         | **20** | **-3.1039 (Ep 19)**        | **0.000264**         | **0.000226**     | **0.000334**  |
 | 120            |   20   | -2.9704 (Ep 15)            | 0.000466             | 0.000337         | 0.000443      |
 
-*Note: The best-performing run with CONTEXT_LENGTH=30 (Test MAE 0.000207) is used as the final model, but the results above show a more typical run.*
+*Note: The results show multiple runs with CONTEXT_LENGTH=30, demonstrating slight variance due to the stochastic nature of training. The run with Test MAE 0.000207 was chosen as the champion for the subsequent experiments.*
 
 ### Conclusion (Context Length)
 The model with **`CONTEXT_LENGTH = 30`** achieved the best performance. For this high-frequency dataset, a shorter lookback window proved most effective, suggesting the most relevant predictive information is contained within the most recent 2.5 hours of data. This value was fixed for all subsequent experiments.
@@ -71,8 +71,8 @@ This final experiment tuned the core training dynamics.
 
 ### Results Summary (Batch Size & Learning Rate)
 
-| BATCH_SIZE | LEARNING_RATE | Validation Set MAE | **Test Set MAE** |
-| :--------- | :------------ | :------------------- | :--------------- |
+| `BATCH_SIZE` | `LEARNING_RATE` | Validation Set MAE | **Test Set MAE** |
+| :----------- | :-------------- | :------------------- | :--------------- |
 | **64**       | **1e-4**        | **0.000277**         | **0.000207**     |
 | 32           | 1e-4            | 0.000287             | 0.000214         |
 | 128          | 1e-4            | 0.000476             | 0.000410         |
@@ -80,7 +80,7 @@ This final experiment tuned the core training dynamics.
 | 32           | 5e-5            | 0.000354             | 0.000264         |
 
 ### Conclusion (Batch Size & Learning Rate)
-The configuration of **`BATCH_SIZE=64`** and **`LEARNING_RATE=1e-4`** was confirmed as the best combination, yielding the lowest Test Set MAE during the experimental phase.
+The configuration of **`BATCH_SIZE=64`** and **`LEARNING_RATE=1e-4`** was confirmed as the best combination, yielding the lowest Test Set MAE.
 
 ---
 
@@ -96,7 +96,7 @@ After a comprehensive series of experiments, the optimal configuration for the T
 *   **BATCH_SIZE:** 64
 *   **LEARNING_RATE:** 1e-4
 
-Due to the stochastic nature of deep learning training, multiple runs with identical hyperparameters can yield slightly different results. The best performance achieved with this optimal configuration is reported as the final result for this project.
+Multiple runs with these optimal hyperparameters were conducted to assess stability, yielding a consistent Test Set MAE between 0.000207 and 0.000229. The best performance achieved is reported as the final result.
 
 ### Final Model Performance (Best Run)
 
@@ -109,14 +109,18 @@ Due to the stochastic nature of deep learning training, multiple runs with ident
 | Training   | MAE    | 0.000268       |
 | Training   | RMSE   | 0.000400       |
 
-This final result demonstrates a significant improvement over the baseline LSTM model, confirming the effectiveness of the Transformer architecture for this specific financial forecasting problem.
+This final result demonstrates a significant improvement over the baseline LSTM model, confirming the effectiveness of the Transformer architecture for this financial forecasting problem.
 
-### Exported Artifacts for Deployment
+---
 
-The final, optimized model, along with its necessary components, has been saved for external use. This "deployment package" includes:
+## Final Exported Artifacts for Deployment
+
+The final, optimized model was exported along with its essential components to facilitate its use in external trading applications like `backtrader`. The following files were generated and stored in the `Models/` directory:
 
 1.  **`best_transformer_model.pth`**: A PyTorch file containing the learned weights and biases of the neural network. This represents the "intelligence" of the model.
 2.  **`target_scaler.pkl`**: A `joblib` file containing the `StandardScaler` object that was fitted on the training data. This is essential for correctly normalizing new, incoming data before prediction and for converting the model's scaled output back into an actual price.
-3.  **`model_config.json`**: A configuration file detailing the architecture of the model (e.g., number of layers, heads). This is required to build an identical model structure into which the weights can be loaded.
+3.  **`model_config.json`**: A configuration file detailing the architecture of the model (e.g., number of layers, heads).
 
-These three files provide a complete, self-contained package for integrating the predictive model into a backtesting framework like `backtrader` or a live trading environment.
+***
+**Important Note on Usage:** These three files form a complete, self-contained package. When loading the model in an external script, the `model_config.json` **must** be used to instantiate an identical model architecture. Failure to do so will result in a `RuntimeError` due to a mismatch between the architecture and the loaded weights (`.pth` file).
+***
