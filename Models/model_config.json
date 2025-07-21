@@ -1,7 +1,7 @@
 {
-    "CONTEXT_LENGTH": 30,
-    "PREDICTION_LENGTH": 1,
-    "LAGS_SEQUENCE": [
+    "context_length": 30,
+    "prediction_length": 1,
+    "lags_sequence": [
         1,
         2,
         3,
@@ -10,11 +10,14 @@
         6,
         7
     ],
-    "D_MODEL": 32,
-    "ENCODER_LAYERS": 2,
-    "DECODER_LAYERS": 2,
-    "ENCODER_ATTENTION_HEADS": 4,
-    "DECODER_ATTENTION_HEADS": 4,
-    "DROPOUT": 0.1,
-    "NUM_TIME_FEATURES": 4
+    "d_model": 32,
+    "encoder_layers": 2,
+    "decoder_layers": 2,
+    "encoder_attention_heads": 4,
+    "decoder_attention_heads": 4,
+    "encoder_ffn_dim": 32,
+    "decoder_ffn_dim": 32,
+    "dropout": 0.1,
+    "feature_size": 13,
+    "distribution_output": "normal"
 }
