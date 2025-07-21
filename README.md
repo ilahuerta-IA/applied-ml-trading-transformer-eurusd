@@ -104,21 +104,25 @@ Upon successful execution of the notebook, a complete package for deployment is 
 
 These three files are all that is needed to use the model in an external application like a `backtrader` script.
 
+***
+**IMPORTANT NOTE ON DEPLOYMENT:** The `model_config.json` file is the definitive blueprint for the model's architecture. When loading the model in a separate script, the architecture instantiated must **exactly match** the one defined in this config file. Any mismatch (e.g., a different `D_MODEL`, `_LAYERS`, etc.) will cause a `RuntimeError` during `load_state_dict` with messages like "size mismatch" or "Missing key(s) in state_dict". Always ensure you are using the canonical `model_config.json` file that was generated alongside the `.pth` weights you intend to load.
+***
+
 ### Conceptual Guide for `backtrader` Integration
 Integrating this model into a `backtrader` strategy involves creating a custom `Indicator` or directly calling a prediction function within your `Strategy` class's `next()` method.
 
 **Prediction Workflow:**
 1.  **Load Artifacts:** In your script's `__init__`, load the model config, build the model architecture, load the weights from the `.pth` file, and load the scaler from the `.pkl` file.
-2.  **Gather Data:** In the `next` method of your strategy, access the last `CONTEXT_LENGTH` (30) closing prices from your `backtrader` data feed.
+2.  **Gather Data:** In the `next` method of your strategy, access the last `CONTEXT_LENGTH` + `max(lags_sequence)` closing prices from your `backtrader` data feed.
 3.  **Preprocess:**
     *   Create the required time features (hour, day of week, etc.) from the timestamps.
-    *   Use the loaded `target_scaler` to `.transform()` the 30 closing prices into their scaled representation.
+    *   Use the loaded `target_scaler` to `.transform()` the prices into their scaled representation.
 4.  **Predict:** Feed the scaled prices and time features into your loaded model to get a scaled prediction for the next bar.
 5.  **Post-process:** Use the loaded `target_scaler` to `.inverse_transform()` the model's output back into a real, understandable EURUSD price prediction.
 6.  **Generate Signal:** Use this final prediction to generate a trading signal. For example:
     *   *Directional Signal:* If `predicted_price > current_close`, consider it a bullish signal.
     *   *Magnitude Filter:* If `abs(predicted_price - current_close) > some_threshold`, it indicates a strong expected move.
-    *   *Confirmation:* Use the prediction to confirm an entry signal from another indicator (e.g., an RSI crossover).
+    *   *Confirmation:* Use the prediction to confirm an entry signal from another indicator.
 
 A separate repository dedicated to the backtesting and strategy implementation using these artifacts is the recommended next step.
 
