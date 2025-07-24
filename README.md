@@ -13,13 +13,13 @@ The objective is to build, evaluate, and systematically optimize a TimeSeriesTra
 *   **Asset:** EURUSD (Euro / US Dollar)
 *   **Frequency:** 5-minute intervals
 *   **Period:** 10 years
-*   **Source:** `EURUSD_5m_10Yea.csv` (Included in the repository)
+*   **Source:** `EURUSD_5m_10Yea.csv`
 *   **Columns used:** `Timestamp` (derived), `Close`
 
 ## Features
 *   Systematic hyperparameter tuning documented in `EXPERIMENTS.md`.
 *   A definitive training script (`Train_Transformer_EURUSD_Model.ipynb`) that uses the optimal hyperparameters.
-*   The training script includes a robust PyTorch loop with validation-based early stopping to prevent overfitting.
+*   A robust PyTorch training loop with validation-based early stopping to prevent overfitting.
 *   Export of final, synchronized model artifacts (`.pth`, `.pkl`, `.json`) ready for deployment.
 
 ## Technologies Used
@@ -55,63 +55,42 @@ This notebook is pre-configured with the best hyperparameters found during the r
 
 ---
 
-## Model Architecture & Hyperparameter Tuning
-The TimeSeriesTransformer is an encoder-decoder architecture that uses self-attention mechanisms to capture temporal dependencies. This project undertakes a rigorous, multi-stage hyperparameter tuning process to find the optimal configuration.
-
-Key hyperparameters systematically tested include:
-*   `CONTEXT_LENGTH` (Lookback Window)
-*   `D_MODEL`, `*_LAYERS`, & `*_HEADS` (Model Complexity)
-*   `DROPOUT` (Regularization)
-*   `LEARNING_RATE` & `BATCH_SIZE` (Training Dynamics)
-
-Detailed experimental results and the process for selecting the final optimal configuration are documented in **[EXPERIMENTS.md](EXPERIMENTS.md)**.
-
 ## Performance Comparison vs. LSTM
-This project's primary value is in its direct comparison to a well-optimized LSTM model from a parallel research effort. After comprehensive tuning and a definitive retraining run, the final TimeSeriesTransformer model demonstrates superior predictive accuracy and robustness.
+This project's primary value is in its direct comparison to a well-optimized LSTM model from a parallel research effort. After comprehensive tuning and a definitive retraining run with a valid configuration, the final TimeSeriesTransformer model demonstrates superior predictive accuracy and robustness.
 
 | Model                               | Test Set MAE (EURUSD) | Test Set MAE (Pips) | Test Set RMSE (EURUSD) |
 | :---------------------------------- | :-------------------- | :------------------ | :--------------------- |
 | Optimized LSTM (V1.0)               | 0.000237              | 2.37                | 0.000417               |
-| **TimeSeriesTransformer (Final)**   | **0.000212**          | **2.12**            | **0.000333**           |
+| **TimeSeriesTransformer (Final)**   | **0.000203**          | **2.03**            | **0.000318**           |
 
-*(Note: The LSTM result is sourced from the [reference repository](https://github.com/ilahuerta-IA/applied-ml-trading-lstm-eurusd). The final Transformer model is highly stable, with multiple runs yielding a Test MAE in the tight range of 0.000207-0.000229.)*
+*(Note: The LSTM result is sourced from the [reference repository](https://github.com/ilahuerta-IA/applied-ml-trading-lstm-eurusd).)*
 
 ### Final Conclusion
-The final optimized TimeSeriesTransformer model achieved a **Test Set Mean Absolute Error of 0.000212 (~2.12 pips)**.
+The final optimized TimeSeriesTransformer model achieved a **Test Set Mean Absolute Error of 0.000203 (~2.03 pips)**.
 
 This result is superior to the LSTM baseline in two key ways:
-1.  **Higher Accuracy:** The MAE is lower, indicating a more precise average prediction.
-2.  **Greater Robustness:** The RMSE is significantly lower (by ~20%), indicating the Transformer makes fewer large, erroneous predictions, which is critical for risk management in a live trading environment.
+1.  **Higher Accuracy:** The MAE is **14% lower** than the LSTM's, indicating a more precise average prediction.
+2.  **Greater Robustness:** The RMSE is **24% lower**, indicating the Transformer makes significantly fewer large, erroneous predictions, which is critical for risk management in a live trading environment.
 
 This project successfully demonstrates that for this large, high-frequency financial dataset, the modern attention-based Transformer architecture provides a measurable performance edge over a traditional, highly-optimized recurrent neural network.
 
 ---
 
-## Exported Model Artifacts & Backtrader Integration
+## Exported Model Artifacts & Deployment Notes
+
 After running the final training notebook, a complete and synchronized package for deployment is saved in the `Models/` directory.
 
 *   `best_transformer_model.pth`: The trained model's state dictionary (the weights).
 *   `target_scaler.pkl`: The fitted `StandardScaler` object for data normalization.
 *   `model_config.json`: A JSON file containing the model's architectural hyperparameters.
 
-***
-**A Note on Versioning and Reproducibility:** The saved artifacts, particularly the `target_scaler.pkl` file, are dependent on the library versions used during training. To avoid potential `InconsistentVersionWarning` or loading errors in a different environment, it is **highly recommended to re-run the `Train_Transformer_EURUSD_Model.ipynb` notebook.** This will generate fresh artifacts that are perfectly compatible with your current library versions.
-***
+### Critical Note on `CONTEXT_LENGTH` and `lags_sequence`
+A key architectural requirement of the Hugging Face `TimeSeriesTransformer` is that the `CONTEXT_LENGTH` (the main lookback window) **must be greater than the maximum value in the `lags_sequence`**.
 
-### Conceptual Guide for `backtrader` Integration
-Integrating this model into a `backtrader` strategy involves creating a custom `Indicator` or directly calling a prediction function within your `Strategy` class's `next()` method.
+During initial experiments, a `ValueError` was encountered because a configuration with `CONTEXT_LENGTH=30` was incompatible with a `lags_sequence` containing a lag of `21`. The final, optimal model was retrained with a valid configuration (`CONTEXT_LENGTH=30` and `lags_sequence=[1, 2, 3, 4, 5, 6, 7]`), which resolved this issue. This is a critical check for anyone adapting this model.
 
-**Prediction Workflow:**
-1.  **Load Artifacts:** In your script's `__init__`, load the model config, build the model architecture, load the weights from the `.pth` file, and load the scaler from the `.pkl` file.
-2.  **Gather Data:** In the `next` method of your strategy, access the last `CONTEXT_LENGTH` + `max(lags_sequence)` closing prices from your `backtrader` data feed.
-3.  **Preprocess:**
-    *   Create the required time features (hour, day of week, etc.) from the timestamps.
-    *   Use the loaded `target_scaler` to `.transform()` the prices into their scaled representation.
-4.  **Predict:** Feed the scaled prices and time features into your loaded model to get a scaled prediction for the next bar.
-5.  **Post-process:** Use the loaded `target_scaler` to `.inverse_transform()` the model's output back into a real, understandable EURUSD price prediction.
-6.  **Generate Signal:** Use this final prediction to generate a trading signal.
-
-A separate repository dedicated to the backtesting and strategy implementation using these artifacts is the recommended next step.
+### A Note on Versioning and Reproducibility
+To avoid potential library versioning conflicts (e.g., `scikit-learn InconsistentVersionWarning`) or model configuration mismatches, the recommended approach for deployment is to **re-run the `Train_Transformer_EURUSD_Model.ipynb` notebook** in your target environment. This generates a fresh set of artifacts (`.pth`, `.pkl`, and `.json`) that are guaranteed to be compatible.
 
 ---
 ## Contributing

@@ -20,7 +20,7 @@
   "encoder_ffn_dim": 64,
   "encoder_layerdrop": 0.1,
   "encoder_layers": 2,
-  "feature_size": 15,
+  "feature_size": 13,
   "init_std": 0.02,
   "input_size": 1,
   "is_encoder_decoder": true,
@@ -31,9 +31,7 @@
     4,
     5,
     6,
-    7,
-    14,
-    21
+    7
   ],
   "loss": "nll",
   "model_type": "time_series_transformer",

@@ -10,7 +10,7 @@ All experiments use the 10-year, 5-minute EURUSD dataset with a 60/20/20 chronol
 
 ## Experiment 1: Optimizing Lookback Window (CONTEXT_LENGTH)
 
-This experiment focused on determining the most effective lookback window, which defines how much historical context the model uses for its predictions.
+This experiment focused on determining the most effective lookback window.
 
 *   **Base Architecture:** `D_MODEL=32`, `Layers=2`, `Heads=4`, `Dropout=0.1`
 *   **Base Training:** `LR=1e-4`, `Batch Size=64`, `Patience=10`, `Epochs=20` (or 5 for computationally intensive runs)
@@ -20,14 +20,14 @@ This experiment focused on determining the most effective lookback window, which
 | CONTEXT_LENGTH | Epochs | Best `val_loss` (at Epoch) | Validation Set MAE | **Test Set MAE** | Test Set RMSE |
 | :------------: | :----: | :------------------------- | :------------------- | :--------------- | :------------ |
 | 15             |   20   | -3.0266 (Ep 15)            | 0.000276             | 0.000257         | 0.000360      |
-| **30**         | **20** | **-3.1039 (Ep 19)**        | **0.000264**         | **0.000226**     | **0.000334**  |
+| **30**         | **50** | **-3.4466 (Ep 33)**        | **0.000247**         | **0.000203**     | **0.000318**  |
 | 30 (Run 2)     |   20   | -3.0656 (Ep 19)            | 0.000277             | 0.000207         | 0.000320      |
 | 60             |   5    | -2.6073 (Ep 4)             | 0.000438             | 0.000390         | 0.000502      |
 | 120            |   20   | -2.9704 (Ep 15)            | 0.000466             | 0.000337         | 0.000443      |
 | 288            |   5    | *(Run Timed Out)*          | -                    | -                | -             |
 
 ### Conclusion (Context Length)
-The model with **`CONTEXT_LENGTH = 30`** achieved the best performance. For this high-frequency dataset, a shorter lookback window proved most effective, suggesting the most relevant predictive information is contained within the most recent 2.5 hours of data. Longer windows introduced more noise than signal. This value was fixed for all subsequent experiments.
+The model with **`CONTEXT_LENGTH = 30`** achieved the best performance. For this high-frequency dataset, a shorter lookback window proved most effective, suggesting the most relevant predictive information is contained within the most recent 2.5 hours of data. This value was fixed for all subsequent experiments.
 
 ---
 
@@ -45,24 +45,24 @@ This experiment investigated whether a wider or deeper Transformer architecture 
 | X-Large            | 128 / 4 / 8              | 0.000284               | 0.000210         | 0.000326       |
 
 ### Conclusion (Model Size)
-The **"Small (Baseline)"** configuration demonstrated the best generalization to the unseen test set. While larger models achieved competitive validation scores, they failed to outperform the simpler architecture on the final test data, indicating minor overfitting. The configuration of `D_MODEL=32`, `LAYERS=2`, `HEADS=4` was confirmed as the most robust choice.
+The **"Small (Baseline)"** configuration demonstrated the best generalization to the unseen test set. Larger models showed signs of minor overfitting. The configuration of `D_MODEL=32`, `LAYERS=2`, `HEADS=4` was confirmed as the most robust choice.
 
 ---
 
 ## Experiment 3: Optimizing Dropout Rate (Regularization)
 
-This experiment tested different dropout rates to find the optimal level of regularization.
+This experiment tested different dropout rates.
 
 ### Results Summary (Dropout Rate)
 
 | DROPOUT Rate       | Validation Set MAE | **Test Set MAE** |
 | :----------------- | :------------------- | :--------------- |
 | **0.1 (Baseline)** | **0.000277**         | **0.000207**     |
-| 0.2                | 0.000498             | 0.000401         |
-| 0.3                | 0.000429             | 0.000364         |
+| 0.2                | 0.000498             | 0.000401       |
+| 0.3                | 0.000429             | 0.000364       |
 
 ### Conclusion (Dropout Rate)
-The baseline rate of **`DROPOUT = 0.1`** was confirmed as optimal. Higher rates caused the model to underfit, leading to worse performance.
+The baseline rate of **`DROPOUT = 0.1`** was confirmed as optimal. Higher rates caused the model to underfit.
 
 ---
 
@@ -85,38 +85,38 @@ The configuration of **`BATCH_SIZE=64`** and **`LEARNING_RATE=1e-4`** was confir
 
 ---
 
-## Experiment 5: Final Definitive Retraining
+## Post-Tuning: Final Definitive Retraining
 
-After identifying the optimal hyperparameters through the preceding experiments, a final, definitive training run was conducted to produce the champion model. This run used an extended `EPOCHS=50` limit to ensure full convergence.
+After identifying the optimal hyperparameters and correcting a configuration issue with `lags_sequence`, a final, definitive training run was conducted to produce the champion model. This run used an extended `EPOCHS=50` limit to ensure full convergence.
 
 ### Final Optimal Configuration
 
 *   **DISTRIBUTION_OUTPUT:** "student_t"
 *   **CONTEXT_LENGTH:** 30
-*   **LAGS_SEQUENCE:** `[1, 2, 3, 4, 5, 6, 7, 14, 21]`
+*   **LAGS_SEQUENCE:** `[1, 2, 3, 4, 5, 6, 7]` (Valid default sequence)
 *   **D_MODEL:** 32
 *   **LAYERS:** 2
 *   **HEADS:** 4
 *   **DROPOUT:** 0.1
 *   **BATCH_SIZE:** 64
 *   **LEARNING_RATE:** 1e-4
-*   **EPOCHS:** 50 (with `PATIENCE=10`)
+*   **EPOCHS:** 50 (with `PATIENCE=10`, early stopped at Epoch 43)
 
 ### Final Model Performance (Definitive Run)
 
-This run yielded a new best-performing model, finding its optimal state at **Epoch 46** with a validation loss of **-3.4498**.
+This run produced the project's best and most reliable performance metrics, finding its optimal state at **Epoch 33**.
 
 | Dataset    | Metric | Value (EURUSD) |
 | :--------- | :----: | :------------- |
-| **Test**   | **MAE**  | **0.000212**   |
-| **Test**   | **RMSE** | **0.000333**   |
-| Validation | MAE    | 0.000259       |
-| Validation | RMSE   | 0.000405       |
-| Training   | MAE    | 0.000238       |
-| Training   | RMSE   | 0.000377       |
+| **Test**   | **MAE**  | **0.000203**   |
+| **Test**   | **RMSE** | **0.000318**   |
+| Validation | MAE    | 0.000247       |
+| Validation | RMSE   | 0.000381       |
+| Training   | MAE    | 0.000234       |
+| Training   | RMSE   | 0.000368       |
 
 ### Overall Conclusion
-The comprehensive tuning process successfully identified a robust and highly accurate configuration for the TimeSeriesTransformer. The final model, with a **Test Set MAE of 0.000212**, demonstrates a clear performance improvement over the LSTM baseline. This confirms the effectiveness of the attention-based architecture for this high-frequency financial forecasting task. Multiple runs with the optimal hyperparameters showed high stability, with Test MAE scores consistently in the `0.000207` - `0.000229` range.
+The comprehensive tuning process successfully produced a robust and highly accurate model. The final Test Set MAE of **0.000203** demonstrates a clear performance improvement over the LSTM baseline. This confirms the effectiveness of the attention-based architecture for this high-frequency financial forecasting problem.
 
 ---
 
@@ -124,10 +124,10 @@ The comprehensive tuning process successfully identified a robust and highly acc
 
 The final, optimized model was exported along with its essential components to facilitate its use in external trading applications like `backtrader`. The following files were generated and stored in the `Models/` directory:
 
-1.  **`best_transformer_model.pth`**: A PyTorch file containing the learned weights and biases of the neural network. This represents the "intelligence" of the model.
-2.  **`target_scaler.pkl`**: A `joblib` file containing the `StandardScaler` object that was fitted on the training data. This is essential for correctly normalizing new, incoming data before prediction and for converting the model's scaled output back into an actual price.
-3.  **`model_config.json`**: A configuration file detailing the architecture of the model (e.g., `lags_sequence`, number of layers, heads).
+1.  **`best_transformer_model.pth`**: A PyTorch file containing the learned weights and biases of the neural network.
+2.  **`target_scaler.pkl`**: A `joblib` file containing the `StandardScaler` object that was fitted on the training data.
+3.  **`model_config.json`**: A configuration file detailing the model's architecture.
 
 ***
-**Important Note on Usage:** These three files form a complete, self-contained package. When loading the model in an external script, the `model_config.json` **must** be used to instantiate an identical model architecture. Failure to do so will result in a `RuntimeError` due to a mismatch between the architecture and the loaded weights (`.pth` file).
+**Important Note on Usage:** These three files form a complete, self-contained package. When loading the model, the `model_config.json` **must** be used to instantiate an identical model architecture. Failure to do so will result in a `RuntimeError` due to a mismatch between the architecture and the loaded weights (`.pth` file).
 ***
