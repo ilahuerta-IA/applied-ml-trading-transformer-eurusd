@@ -3,6 +3,17 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![Hugging Face Transformers](https://img.shields.io/badge/%F0%9F%A4%97_Transformers-black?logo=hugging-face)](https://huggingface.co/docs/transformers/index)
 
+## ⚠️ Important Disclaimer
+
+**This project is for educational and research purposes only. It is not financial advice.**
+
+The software, models, and data provided in this repository are intended to demonstrate concepts in algorithmic trading and machine learning. They are not designed or tested for use in live trading environments.
+
+- **High Risk:** Trading in financial markets is inherently risky. Any use of this code, or concepts derived from it, for live trading is done at your own risk. You are solely responsible for any financial losses you may incur.
+- **No Warranty:** This software is provided "as is" without warranty of any kind, express or implied. The author makes no guarantees about its performance, accuracy, or profitability.
+- **Regulatory Status (EU AI Act):** The AI models within this repository could be subject to regulations such as the EU AI Act if used in a commercial or live trading context. By downloading or using this code, you acknowledge that you are responsible for ensuring your own compliance with all applicable laws and regulations.
+- **Not for Professional Use:** This is not a commercial-grade trading tool. Do not use this software with real money.
+
 ## Short Description
 This project develops and fine-tunes a **TimeSeriesTransformer** model to forecast EURUSD 5-minute closing prices. It serves as a modern, attention-based counterpart to a baseline LSTM model developed in a separate [repository](https://github.com/ilahuerta-IA/applied-ml-trading-lstm-eurusd). The primary goal is to create a robust predictive "tool" that can generate signals for an algorithmic trading strategy and to compare its performance against a traditional recurrent architecture.
 
@@ -12,8 +23,8 @@ The objective is to build, evaluate, and systematically optimize a TimeSeriesTra
 ## Dataset
 *   **Asset:** EURUSD (Euro / US Dollar)
 *   **Frequency:** 5-minute intervals
-*   **Period:** 10 years
-*   **Source:** `EURUSD_5m_10Yea.csv`
+*   **Optimal Period:** 10 years. An experiment was conducted using 20 years of historical data, but performance degraded. This suggests that the market regimes from 15-20 years ago are less relevant for predicting current market behavior, and a more focused 10-year dataset yields a more accurate model.
+*   **Source:** `EURUSD_5m_10Yea.csv` (Included in the repository)
 *   **Columns used:** `Timestamp` (derived), `Close`
 
 ## Features

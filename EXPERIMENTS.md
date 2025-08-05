@@ -115,8 +115,27 @@ This run produced the project's best and most reliable performance metrics, find
 | Training   | MAE    | 0.000234       |
 | Training   | RMSE   | 0.000368       |
 
-### Overall Conclusion
-The comprehensive tuning process successfully produced a robust and highly accurate model. The final Test Set MAE of **0.000203** demonstrates a clear performance improvement over the LSTM baseline. This confirms the effectiveness of the attention-based architecture for this high-frequency financial forecasting problem.
+## Experiment 6: Impact of Dataset Length (10 Years vs. 20 Years)
+
+A final experiment was conducted to determine if a larger historical dataset could further improve model performance. The model was retrained with the same optimal hyperparameters but using **20 years** of 5-minute EURUSD data.
+
+### Results Summary (Dataset Length)
+
+| Dataset Length | Test Set MAE (EURUSD) | Test Set RMSE (EURUSD) |
+| :------------- | :-------------------- | :--------------------- |
+| **10 Years**   | **0.000203**          | **0.000318**           |
+| 20 Years       | 0.000249              | 0.000367               |
+
+### Conclusion (Dataset Length)
+The results clearly show that the model trained on the **10-year dataset is superior**.
+
+The performance degradation with the 20-year dataset suggests that older market regimes (e.g., from the 2008 financial crisis era) introduce patterns that are not relevant to predicting the more recent market behavior found in the test set. This highlights a critical concept in financial ML: **data relevancy can be more important than data quantity.** For this task, a 10-year history provides the optimal balance of sufficient data and modern market dynamics.
+
+---
+
+## Final Overall Conclusion
+
+The comprehensive tuning process identified a robust and highly accurate configuration for the TimeSeriesTransformer. The final champion model, trained on the 10-year dataset, achieved a **Test Set MAE of 0.000203**, confirming the effectiveness of the Transformer architecture for this financial forecasting problem.
 
 ---
 
